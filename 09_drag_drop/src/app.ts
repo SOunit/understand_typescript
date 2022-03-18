@@ -1,3 +1,40 @@
+// validation
+interface ValidateInput {
+  value: string | number;
+  required?: boolean;
+  minLength?: number;
+  maxLength?: number;
+  min?: number;
+  max?: number;
+}
+
+function validate(validateInput: ValidateInput) {
+  let isValid = true;
+  if (validateInput.required) {
+    isValid = isValid && validateInput.value.toString().trim().length !== 0;
+  }
+  if (
+    validateInput.minLength != null &&
+    typeof validateInput.value === "string"
+  ) {
+    isValid = isValid && validateInput.value.length >= validateInput.minLength;
+  }
+  if (
+    validateInput.maxLength != null &&
+    typeof validateInput.value === "string"
+  ) {
+    isValid = isValid && validateInput.value.length <= validateInput.maxLength;
+  }
+  if (validateInput.min != null && typeof validateInput.value === "number") {
+    isValid = isValid && validateInput.value >= validateInput.min;
+  }
+  if (validateInput.max != null && typeof validateInput.value === "number") {
+    isValid = isValid && validateInput.value <= validateInput.max;
+  }
+
+  return isValid;
+}
+
 // auto bind decorator
 function autoBind(
   _target: any,
@@ -51,10 +88,56 @@ class ProjectInput {
     this.attach();
   }
 
+  private gatherUserInput(): [string, string, number] | void {
+    const enteredTitle = this.titleInputElement.value;
+    const enteredDescription = this.descriptionInputElement.value;
+    const enteredPeople = this.peopleInputElement.value;
+
+    const titleValidate: ValidateInput = {
+      value: enteredTitle,
+      required: true,
+    };
+    const descriptionValidate: ValidateInput = {
+      value: enteredDescription,
+      required: true,
+      minLength: 5,
+    };
+    const peopleValidate: ValidateInput = {
+      value: +enteredPeople,
+      required: true,
+      min: 1,
+      max: 5,
+    };
+
+    if (
+      !validate(titleValidate) ||
+      !validate(descriptionValidate) ||
+      !validate(peopleValidate)
+    ) {
+      alert("Invalid input, please try again");
+      return;
+    } else {
+      return [enteredTitle, enteredDescription, +enteredPeople];
+    }
+  }
+
+  private clearInputs() {
+    this.titleInputElement.value = "";
+    this.descriptionInputElement.value = "";
+    this.peopleInputElement.value = "";
+  }
+
   @autoBind
   private submitHandler(event: Event) {
     event.preventDefault();
-    console.log(this.titleInputElement.value);
+    const userInput = this.gatherUserInput();
+
+    // tuple is array in runtime
+    if (Array.isArray(userInput)) {
+      const [title, desc, people] = userInput;
+      console.log(title, desc, people);
+      this.clearInputs();
+    }
   }
 
   private configure() {
